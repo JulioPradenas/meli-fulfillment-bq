@@ -49,26 +49,41 @@ ANOMALY_KINDS: tuple[str, ...] = (
     "clave_nula",
     "duplicado_exacto",
     "evento_fuera_de_orden",
+    "cast_fallido",
+    "entrega_antes_despacho",
 )
 
 # Presupuesto fijo. Cada una suma una fila (no hay mutación in-place).
 ANOMALY_BUDGET: dict[str, dict[str, int]] = {
     "regiones": {"clave_nula": 1, "duplicado_exacto": 1},
     "comunas": {"fk_huerfana": 2, "clave_nula": 1, "duplicado_exacto": 1},
-    "centros_fulfillment": {"fk_huerfana": 1, "clave_nula": 1, "duplicado_exacto": 1},
-    "carriers": {"clave_nula": 1, "duplicado_exacto": 1},
-    "sellers": {"fk_huerfana": 2, "clave_nula": 1, "duplicado_exacto": 2},
+    "centros_fulfillment": {
+        "fk_huerfana": 1,
+        "clave_nula": 1,
+        "duplicado_exacto": 1,
+        "cast_fallido": 2,
+    },
+    "carriers": {"clave_nula": 1, "duplicado_exacto": 1, "cast_fallido": 2},
+    "sellers": {
+        "fk_huerfana": 2,
+        "clave_nula": 1,
+        "duplicado_exacto": 2,
+        "cast_fallido": 2,
+    },
     "ordenes": {
         "fk_huerfana": 12,
         "fecha_nula": 8,
         "clave_nula": 6,
         "duplicado_exacto": 10,
+        "cast_fallido": 4,
     },
     "envios": {
         "fk_huerfana": 20,
         "fecha_nula": 10,
         "clave_nula": 8,
         "duplicado_exacto": 12,
+        "cast_fallido": 6,
+        "entrega_antes_despacho": 8,
     },
     "eventos_tracking": {
         "fk_huerfana": 15,
@@ -76,6 +91,7 @@ ANOMALY_BUDGET: dict[str, dict[str, int]] = {
         "clave_nula": 8,
         "duplicado_exacto": 12,
         "evento_fuera_de_orden": 20,
+        "cast_fallido": 6,
     },
 }
 
@@ -282,6 +298,17 @@ PK_PREFIX = {
     "envios": "ENVX",
     "eventos_tracking": "EVTX",
 }
+
+# Columna que cast_fallido deja ilegible. El resto de la fila sigue siendo válido.
+CAST_COLUMN = {
+    "centros_fulfillment": "activo",
+    "carriers": "activo",
+    "sellers": "activo",
+    "ordenes": "ts_creacion",
+    "envios": "fecha_promesa",
+    "eventos_tracking": "ts_evento",
+}
+CAST_TOKEN = "NO-CAST"
 
 CLEAN_ID = {
     "ordenes": re.compile(r"ORD-\d{6}"),
@@ -750,7 +777,51 @@ def inject_anomalies(
         events.append(row)
     ev_applied["evento_fuera_de_orden"] = n
     tables["eventos_tracking"] = events
+    _append_cast(tables, "eventos_tracking", clean, rng, ev_applied)
+    for table in TABLE_ORDER:
+        if table == "eventos_tracking":
+            continue
+        _append_cast(tables, table, clean, rng, applied[table])
+    _append_entrega_invertida(tables, clean, rng, applied["envios"])
     return tables, applied
+
+
+def _append_cast(
+    tables: dict[str, list[dict[str, str]]],
+    table: str,
+    clean: dict[str, list[dict[str, str]]],
+    rng: random.Random,
+    applied: dict[str, int],
+) -> None:
+    n = ANOMALY_BUDGET.get(table, {}).get("cast_fallido", 0)
+    applied["cast_fallido"] = n
+    if n <= 0:
+        return
+    column = CAST_COLUMN[table]
+    pk = PRIMARY_KEY[table]
+    prefix = PK_PREFIX[table]
+    for i, row in enumerate(_sample(clean[table], n, rng)):
+        row[pk] = f"{prefix}-CF-{i:04d}"
+        row[column] = CAST_TOKEN
+        tables[table].append(row)
+
+
+def _append_entrega_invertida(
+    tables: dict[str, list[dict[str, str]]],
+    clean: dict[str, list[dict[str, str]]],
+    rng: random.Random,
+    applied: dict[str, int],
+) -> None:
+    n = ANOMALY_BUDGET["envios"].get("entrega_antes_despacho", 0)
+    applied["entrega_antes_despacho"] = n
+    if n <= 0:
+        return
+    pool = [row for row in clean["envios"] if row["ts_entrega"] and row["ts_despacho"]]
+    for i, row in enumerate(_sample(pool, n, rng)):
+        despacho = parse_ts(row["ts_despacho"])
+        row["envio_id"] = f"ENVX-FI-{i:04d}"
+        row["ts_entrega"] = format_ts(despacho - timedelta(hours=5))
+        tables["envios"].append(row)
 
 
 def build_manifest(
@@ -773,7 +844,10 @@ def build_manifest(
         "note": (
             "row_counts es el total bronze (lo que debe coincidir con num_rows). "
             "anomalies cuenta filas extra inyectadas, por tabla y tipo. "
-            "row_counts = clean_counts + suma de anomalies de esa tabla."
+            "row_counts = clean_counts + suma de anomalies de esa tabla. "
+            "El Paso 3 agregó cast_fallido y entrega_antes_despacho: el bronze "
+            "cambió respecto del Paso 2. make run lo reconstruye desde cero. "
+            "silver lo llena classify() con la prioridad de motivos."
         ),
     }
 
@@ -785,6 +859,11 @@ def generate(seed: int = SEED) -> Generation:
     manifest = build_manifest(
         clean_counts=clean_counts, tables=tables, anomalies=anomalies
     )
+    # Import local para no exigir pandas cuando alguien solo lee el contrato.
+    from silver_rules import classify, resumen
+
+    manifest["silver"] = resumen(classify(tables))
+    manifest["bronze_changed_in"] = "paso-3"
     return Generation(tables=tables, manifest=manifest)
 
 

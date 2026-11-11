@@ -1,11 +1,12 @@
--- Meli Fulfillment — Paso 2: DDL bronze (landing NULLABLE).
+-- Meli Fulfillment — DDL bronze (landing crudo, todo STRING NULLABLE).
 -- Dataset: meli_bronze · location: US · expiración: 60 días.
 -- Sandbox sin facturación: sin DML y sin streaming. Este archivo solo tiene
--- CREATE OR REPLACE TABLE (schema vacío). Los CSV entran por load job
--- WRITE_TRUNCATE. No hay ALTER: si hay que recrear el shape, se reemplaza
--- la tabla y `make run` vuelve a cargar desde cero.
--- Silver/gold (pasos siguientes): CREATE OR REPLACE TABLE/VIEW AS SELECT,
--- partition_expiration_days = 60. Tampoco DML.
+-- CREATE OR REPLACE TABLE. Los CSV entran por load job WRITE_TRUNCATE
+-- con max_bad_records=0. No hay ALTER.
+--
+-- Todas las columnas son STRING. Un BOOL/DATE/TIMESTAMP en el load rechaza
+-- el token 'NO-CAST' y el job falla entero (incidente PR #3: regiones y
+-- comunas cargaron; el resto no). Silver castea con SAFE_CAST.
 --
 -- Lab de portafolio. Marca con fines ilustrativos.
 
@@ -34,7 +35,7 @@ CREATE OR REPLACE TABLE `meli_bronze.centros_fulfillment` (
   fc_nombre STRING,
   tipo_fc STRING,
   comuna_id STRING,
-  activo BOOL
+  activo STRING
 )
 OPTIONS (
   description="Bronze centros_fulfillment. Lab de portafolio. Marca con fines ilustrativos. Landing NULLABLE; la tabla expira a los 60 días.",
@@ -45,7 +46,7 @@ CREATE OR REPLACE TABLE `meli_bronze.carriers` (
   carrier_id STRING,
   carrier_nombre STRING,
   tipo_servicio STRING,
-  activo BOOL
+  activo STRING
 )
 OPTIONS (
   description="Bronze carriers. Lab de portafolio. Marca con fines ilustrativos. Landing NULLABLE; la tabla expira a los 60 días.",
@@ -57,7 +58,7 @@ CREATE OR REPLACE TABLE `meli_bronze.sellers` (
   seller_nombre STRING,
   tipo_seller STRING,
   region_origen STRING,
-  activo BOOL
+  activo STRING
 )
 OPTIONS (
   description="Bronze sellers. Lab de portafolio. Marca con fines ilustrativos. Landing NULLABLE; la tabla expira a los 60 días.",
@@ -67,7 +68,7 @@ OPTIONS (
 CREATE OR REPLACE TABLE `meli_bronze.ordenes` (
   orden_id STRING,
   seller_id STRING,
-  ts_creacion TIMESTAMP,
+  ts_creacion STRING,
   comuna_destino_id STRING,
   estado_orden STRING
 )
@@ -84,10 +85,10 @@ CREATE OR REPLACE TABLE `meli_bronze.envios` (
   carrier_id STRING,
   comuna_destino_id STRING,
   tipo_logistica STRING,
-  ts_creacion TIMESTAMP,
-  ts_despacho TIMESTAMP,
-  ts_entrega TIMESTAMP,
-  fecha_promesa DATE,
+  ts_creacion STRING,
+  ts_despacho STRING,
+  ts_entrega STRING,
+  fecha_promesa STRING,
   estado STRING,
   motivo_cancelacion_logistica STRING
 )
@@ -99,7 +100,7 @@ OPTIONS (
 CREATE OR REPLACE TABLE `meli_bronze.eventos_tracking` (
   evento_id STRING,
   envio_id STRING,
-  ts_evento TIMESTAMP,
+  ts_evento STRING,
   codigo_evento STRING,
   fc_id STRING,
   carrier_id STRING,

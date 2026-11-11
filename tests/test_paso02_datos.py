@@ -79,13 +79,34 @@ def _scan(tables: dict[str, list[dict[str, str]]]) -> dict[str, dict[str, int]]:
             "clave_nula": clave,
             "duplicado_exacto": dupes,
             "evento_fuera_de_orden": 0,
+            "cast_fallido": sum(
+                1 for row in rows if any(str(value).strip() == "NO-CAST" for value in row.values())
+            ),
+            "entrega_antes_despacho": 0,
         }
+
+    if "envios" in tables:
+        invertidas = 0
+        for row in tables["envios"]:
+            if not row["ts_entrega"] or not row["ts_despacho"]:
+                continue
+            try:
+                entrega = datetime.strptime(row["ts_entrega"], TS_FMT)
+                despacho_ts = datetime.strptime(row["ts_despacho"], TS_FMT)
+            except ValueError:
+                continue
+            if entrega < despacho_ts:
+                invertidas += 1
+        found["envios"]["entrega_antes_despacho"] = invertidas
 
     despacho: dict[str, datetime] = {}
     for ev in tables["eventos_tracking"]:
         if ev["codigo_evento"] != "despachado" or not ev["ts_evento"]:
             continue
-        ts = datetime.strptime(ev["ts_evento"], TS_FMT)
+        try:
+            ts = datetime.strptime(ev["ts_evento"], TS_FMT)
+        except ValueError:
+            continue
         prev = despacho.get(ev["envio_id"])
         if prev is None or ts < prev:
             despacho[ev["envio_id"]] = ts
@@ -96,7 +117,11 @@ def _scan(tables: dict[str, list[dict[str, str]]]) -> dict[str, dict[str, int]]:
         limite = despacho.get(ev["envio_id"])
         if limite is None:
             continue
-        if datetime.strptime(ev["ts_evento"], TS_FMT) < limite:
+        try:
+            ts_evento = datetime.strptime(ev["ts_evento"], TS_FMT)
+        except ValueError:
+            continue
+        if ts_evento < limite:
             ooo += 1
     found["eventos_tracking"]["evento_fuera_de_orden"] = ooo
     return found
@@ -154,7 +179,7 @@ def test_manifest_coincide_con_lo_inyectado(generated):
             generated.manifest["clean_counts"][table] + extra
         )
     assert generated.manifest["clean_counts"]["envios"] == 32_000
-    assert generated.manifest["row_counts"]["envios"] == 32_050
+    assert generated.manifest["row_counts"]["envios"] == 32_064
     assert generated.manifest["clean_counts"]["regiones"] == 16
     assert generated.manifest["horizon_start"] == "2026-05-01"
     assert generated.manifest["horizon_end"] == "2026-10-31"

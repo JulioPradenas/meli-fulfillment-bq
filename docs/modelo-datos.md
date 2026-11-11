@@ -425,10 +425,10 @@ Lo que ninguna de estas páginas responde (a propósito, en este lab):
 
 ## 9. Qué queda fuera del modelo
 
-El CSV, el manifest de anomalías y la carga a `meli_bronze` están en el Paso 2. Siguen fuera de este documento:
+El CSV, el manifest de anomalías y la carga a `meli_bronze` están en el Paso 2. La capa silver y la cuarentena están en el Paso 3. Siguen fuera de este documento:
 
-- Silver (cuarentena de las anomalías) y gold (`f_envios`).
+- Gold (`f_envios`).
 - Informe de Looker Studio publicado.
 - Logos o piezas gráficas de la marca.
 
-En el sandbox las tablas expiran a los 60 días y no hay DML. Silver y gold, cuando existan, se reconstruyen con `CREATE OR REPLACE … AS SELECT` dentro de `make run`.
+En el sandbox las tablas expiran a los 60 días y no hay DML. Silver y gold se reconstruyen con `CREATE OR REPLACE … AS SELECT` dentro de `make run`.
