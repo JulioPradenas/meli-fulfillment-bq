@@ -49,13 +49,13 @@ Cloud Scheduler / Cloud Functions / Composer: solo se narrarán en pasos posteri
 |---|---|---|
 | 1 | Esqueleto, modelo de datos, guía de estilo | ✅ |
 | 2 | CSV sintéticos, anomalías y bronze sandbox | ✅ |
-| 3 | Silver (cuarentena) | ⏳ |
+| 3 | Silver (cuarentena) | ✅ |
 | 4 | Gold `f_envios` + dimensiones | ⏳ |
 | 5 | Demo de partition / cluster | ⏳ |
 | 6 | Looker Studio según la guía de estilo | ⏳ |
 | 7 | One-pager de portafolio | ⏳ |
 
-El bronze ya está definido (Paso 2). Silver y gold siguen fuera: cuando existan, también serán `CREATE OR REPLACE … AS SELECT`, sin DML, con particiones que expiran a los 60 días.
+El bronze (Paso 2) y el silver con cuarentena (Paso 3) se reconstruyen con `make run`. Gold sigue fuera: también será `CREATE OR REPLACE … AS SELECT`, sin DML, con particiones que expiran a los 60 días.
 
 ## Setup
 
@@ -70,7 +70,9 @@ make test
 
 ## Paso 2 — correrlo en la Mac
 
-El proyecto `meli-fulfillment-jp` está en **BigQuery sandbox, sin facturación**. No hay DML (`INSERT` / `UPDATE` / `DELETE` / `MERGE`) ni streaming inserts. El camino permitido es load job `WRITE_TRUNCATE` y `CREATE OR REPLACE`. Las tablas y las particiones **expiran a los 60 días**; no hace falta conservarlas. `make run` regenera los CSV, reemplaza el schema y vuelve a cargar.
+El proyecto `meli-fulfillment-jp` está en **BigQuery sandbox, sin facturación**. No hay DML (`INSERT` / `UPDATE` / `DELETE` / `MERGE`) ni streaming inserts. El camino permitido es load job `WRITE_TRUNCATE` y `CREATE OR REPLACE`. Las tablas y las particiones **expiran a los 60 días**. `make run` regenera los CSV, recarga bronze y reconstruye silver desde cero.
+
+El Paso 3 cambió el bronze: sumó `cast_fallido` y entregas con `ts_entrega` anterior a `ts_despacho`. Hay que volver a correr `make run`; el bronze que ya estaba cargado no coincide con el manifest nuevo.
 
 ```bash
 gcloud auth application-default login
@@ -93,6 +95,7 @@ Detalle, conteos y anomalías: [docs/paso-02-bronze.md](docs/paso-02-bronze.md).
 
 - [Modelo de datos](docs/modelo-datos.md) — fuentes, `f_envios`, fórmulas, páginas del dashboard
 - [Paso 2 — bronze sandbox](docs/paso-02-bronze.md) — CSV, anomalías, load job, límite de 60 días
+- [Paso 3 — silver y cuarentena](docs/paso-03-silver.md) — tipos, dedup, FK, un motivo por fila
 - [Guía de estilo Looker Studio](looker/STYLE_GUIDE.md) — paleta, layout, KPI cards, es-CL, contraste AA
 
 ## Disclaimer

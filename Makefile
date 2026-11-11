@@ -2,9 +2,9 @@
 # Uso: make test | make data | make bronze | make run
 #       make run DRY=1
 #
-# make run reconstruye todo desde cero: regenera CSV, CREATE OR REPLACE de
-# meli_bronze y load WRITE_TRUNCATE. Después compara num_rows contra
-# data/manifest.json e imprime OK o FAIL.
+# make run reconstruye todo desde cero: CSV, bronze (load WRITE_TRUNCATE)
+# y silver (CREATE OR REPLACE AS SELECT). Después compara conteos.
+# verify_bronze imprime OK/FAIL. verify_silver imprime OK/FALLA.
 #
 # Sandbox (sin facturación): sin DML, sin streaming. Las tablas y las
 # particiones expiran a los 60 días; por eso make run no depende de lo que
@@ -22,13 +22,13 @@ else
   DRY_FLAG :=
 endif
 
-.PHONY: help test data bronze run
+.PHONY: help test data bronze silver run
 
 help:
-	@echo "Targets: data | bronze | run | test"
+	@echo "Targets: data | bronze | silver | run | test"
 	@echo "PY=$(PY)  DRY=$(DRY)"
-	@echo "GCP_PROJECT debe estar exportado para bronze y run reales (no hay default)."
-	@echo "DRY=1 regenera CSV y valida DDL/headers; no consulta BigQuery."
+	@echo "GCP_PROJECT debe estar exportado para bronze, silver y run reales (no hay default)."
+	@echo "DRY=1 regenera CSV y valida sin consultar BigQuery."
 
 test:
 	$(PY) -m pytest -q
@@ -40,5 +40,9 @@ bronze:
 	$(PY) src/apply_ddl.py $(DRY_FLAG)
 	$(PY) src/load_bronze.py $(DRY_FLAG)
 
-run: data bronze
+silver:
+	$(PY) src/build_silver.py $(DRY_FLAG)
+
+run: data bronze silver
 	$(PY) src/verify_bronze.py $(DRY_FLAG)
+	$(PY) src/verify_silver.py $(DRY_FLAG)

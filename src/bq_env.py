@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # sin requisito de residencia). No hay motivo para fijar southamerica-west1.
 LOCATION = "US"
 DATASET = "meli_bronze"
+SILVER_DATASET = "meli_silver"
 EXPIRATION_DAYS = 60
 EXPIRATION_MS = EXPIRATION_DAYS * 24 * 60 * 60 * 1000
 

@@ -55,15 +55,30 @@ def split_statements(sql: str) -> list[str]:
     return statements
 
 
-def ensure_dataset(client, project_id: str) -> str:
+def ensure_dataset(
+    client,
+    project_id: str,
+    dataset_id: str = DATASET,
+    description: str | None = None,
+) -> str:
     """
-    Crea meli_bronze en US si no existe. Si existe en otra location, aborta.
+    Crea el dataset en US si no existe. Si existe en otra location, aborta.
     Fija expiración de tablas y de particiones en 60 días (API, no DML).
     """
     from google.api_core.exceptions import NotFound
     from google.cloud import bigquery
 
-    ref = f"{project_id}.{DATASET}"
+    ref = f"{project_id}.{dataset_id}"
+    if description is None and dataset_id == DATASET:
+        description = (
+            f"{NOTICE} Bronze sandbox. Tablas y particiones expiran a los "
+            f"{EXPIRATION_DAYS} días. make run reconstruye desde cero."
+        )
+    elif description is None:
+        description = (
+            f"{NOTICE} {dataset_id}. Tablas y particiones expiran a los "
+            f"{EXPIRATION_DAYS} días. make run reconstruye desde cero."
+        )
     try:
         existing = client.get_dataset(ref)
     except NotFound:
@@ -71,10 +86,7 @@ def ensure_dataset(client, project_id: str) -> str:
         dataset.location = LOCATION
         dataset.default_table_expiration_ms = EXPIRATION_MS
         dataset.default_partition_expiration_ms = EXPIRATION_MS
-        dataset.description = (
-            f"{NOTICE} Bronze sandbox. Tablas y particiones expiran a los "
-            f"{EXPIRATION_DAYS} días. make run reconstruye desde cero."
-        )
+        dataset.description = description
         client.create_dataset(dataset)
         return "created"
 

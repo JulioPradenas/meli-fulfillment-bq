@@ -73,14 +73,14 @@ El load usa schema explícito, `skip_leading_rows=1`, `autodetect=False`. Aunque
 |---|---:|---:|
 | `regiones` | 16 | 18 |
 | `comunas` | 43 | 47 |
-| `centros_fulfillment` | 6 | 9 |
-| `carriers` | 5 | 7 |
-| `sellers` | 24 | 29 |
-| `ordenes` | 28.596 | 28.632 |
-| `envios` | 32.000 | 32.050 |
-| `eventos_tracking` | 151.524 | 151.589 |
+| `centros_fulfillment` | 6 | 11 |
+| `carriers` | 5 | 9 |
+| `sellers` | 24 | 31 |
+| `ordenes` | 28.596 | 28.636 |
+| `envios` | 32.000 | 32.064 |
+| `eventos_tracking` | 151.524 | 151.595 |
 
-Son decenas de miles de envíos y ~150 mil eventos: cabe en el sandbox y una query posterior sigue en el orden de centavos de dólar que el sandbox no cobra.
+El Paso 3 sumó `cast_fallido` (token `NO-CAST`) y 8 envíos con la entrega anterior al despacho. Esos totales ya están en esta tabla. El desglose por motivo de cuarentena vive en [paso-03-silver.md](paso-03-silver.md). El bronze cargado antes de ese cambio no coincide: `make run` lo reemplaza.
 
 ### Anomalías
 

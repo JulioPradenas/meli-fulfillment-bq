@@ -1,62 +1,79 @@
 {
   "anomalies": {
     "carriers": {
+      "cast_fallido": 2,
       "clave_nula": 1,
       "duplicado_exacto": 1,
+      "entrega_antes_despacho": 0,
       "evento_fuera_de_orden": 0,
       "fecha_nula": 0,
       "fk_huerfana": 0
     },
     "centros_fulfillment": {
+      "cast_fallido": 2,
       "clave_nula": 1,
       "duplicado_exacto": 1,
+      "entrega_antes_despacho": 0,
       "evento_fuera_de_orden": 0,
       "fecha_nula": 0,
       "fk_huerfana": 1
     },
     "comunas": {
+      "cast_fallido": 0,
       "clave_nula": 1,
       "duplicado_exacto": 1,
+      "entrega_antes_despacho": 0,
       "evento_fuera_de_orden": 0,
       "fecha_nula": 0,
       "fk_huerfana": 2
     },
     "envios": {
+      "cast_fallido": 6,
       "clave_nula": 8,
       "duplicado_exacto": 12,
+      "entrega_antes_despacho": 8,
       "evento_fuera_de_orden": 0,
       "fecha_nula": 10,
       "fk_huerfana": 20
     },
     "eventos_tracking": {
+      "cast_fallido": 6,
       "clave_nula": 8,
       "duplicado_exacto": 12,
+      "entrega_antes_despacho": 0,
       "evento_fuera_de_orden": 20,
       "fecha_nula": 10,
       "fk_huerfana": 15
     },
     "ordenes": {
+      "cast_fallido": 4,
       "clave_nula": 6,
       "duplicado_exacto": 10,
+      "entrega_antes_despacho": 0,
       "evento_fuera_de_orden": 0,
       "fecha_nula": 8,
       "fk_huerfana": 12
     },
     "regiones": {
+      "cast_fallido": 0,
       "clave_nula": 1,
       "duplicado_exacto": 1,
+      "entrega_antes_despacho": 0,
       "evento_fuera_de_orden": 0,
       "fecha_nula": 0,
       "fk_huerfana": 0
     },
     "sellers": {
+      "cast_fallido": 2,
       "clave_nula": 1,
       "duplicado_exacto": 2,
+      "entrega_antes_despacho": 0,
       "evento_fuera_de_orden": 0,
       "fecha_nula": 0,
       "fk_huerfana": 2
     }
   },
+  "bronze_changed_in": "paso-3",
   "clean_counts": {
     "carriers": 5,
     "centros_fulfillment": 6,
@@ -71,18 +88,125 @@
   "horizon_end": "2026-10-31",
   "horizon_start": "2026-05-01",
   "location": "US",
-  "note": "row_counts es el total bronze (lo que debe coincidir con num_rows). anomalies cuenta filas extra inyectadas, por tabla y tipo. row_counts = clean_counts + suma de anomalies de esa tabla.",
+  "note": "row_counts es el total bronze (lo que debe coincidir con num_rows). anomalies cuenta filas extra inyectadas, por tabla y tipo. row_counts = clean_counts + suma de anomalies de esa tabla. El Paso 3 agregó cast_fallido y entrega_antes_despacho: el bronze cambió respecto del Paso 2. make run lo reconstruye desde cero. silver lo llena classify() con la prioridad de motivos.",
   "notice": "Lab de portafolio. Marca con fines ilustrativos.",
   "row_counts": {
-    "carriers": 7,
-    "centros_fulfillment": 9,
+    "carriers": 9,
+    "centros_fulfillment": 11,
     "comunas": 47,
-    "envios": 32050,
-    "eventos_tracking": 151589,
-    "ordenes": 28632,
+    "envios": 32064,
+    "eventos_tracking": 151595,
+    "ordenes": 28636,
     "regiones": 18,
-    "sellers": 29
+    "sellers": 31
   },
   "seed": 42,
+  "silver": {
+    "prioridad": [
+      "cast_fallido",
+      "nulo_obligatorio",
+      "duplicado",
+      "fk_huerfana",
+      "fecha_incoherente"
+    ],
+    "tablas": {
+      "carriers": {
+        "cuarentena": 4,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 2,
+          "duplicado": 1,
+          "fecha_incoherente": 0,
+          "fk_huerfana": 0,
+          "nulo_obligatorio": 1
+        },
+        "silver": 5
+      },
+      "centros_fulfillment": {
+        "cuarentena": 5,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 2,
+          "duplicado": 1,
+          "fecha_incoherente": 0,
+          "fk_huerfana": 1,
+          "nulo_obligatorio": 1
+        },
+        "silver": 6
+      },
+      "comunas": {
+        "cuarentena": 4,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 0,
+          "duplicado": 1,
+          "fecha_incoherente": 0,
+          "fk_huerfana": 2,
+          "nulo_obligatorio": 1
+        },
+        "silver": 43
+      },
+      "envios": {
+        "cuarentena": 64,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 6,
+          "duplicado": 12,
+          "fecha_incoherente": 8,
+          "fk_huerfana": 20,
+          "nulo_obligatorio": 18
+        },
+        "silver": 32000
+      },
+      "eventos_tracking": {
+        "cuarentena": 71,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 6,
+          "duplicado": 12,
+          "fecha_incoherente": 20,
+          "fk_huerfana": 15,
+          "nulo_obligatorio": 18
+        },
+        "silver": 151524
+      },
+      "ordenes": {
+        "cuarentena": 40,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 4,
+          "duplicado": 10,
+          "fecha_incoherente": 0,
+          "fk_huerfana": 12,
+          "nulo_obligatorio": 14
+        },
+        "silver": 28596
+      },
+      "regiones": {
+        "cuarentena": 2,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 0,
+          "duplicado": 1,
+          "fecha_incoherente": 0,
+          "fk_huerfana": 0,
+          "nulo_obligatorio": 1
+        },
+        "silver": 16
+      },
+      "sellers": {
+        "cuarentena": 7,
+        "huerfanas": 0,
+        "motivos": {
+          "cast_fallido": 2,
+          "duplicado": 2,
+          "fecha_incoherente": 0,
+          "fk_huerfana": 2,
+          "nulo_obligatorio": 1
+        },
+        "silver": 24
+      }
+    }
+  },
   "timezone": "America/Santiago"
 }
