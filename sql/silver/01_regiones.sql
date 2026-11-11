@@ -17,9 +17,9 @@ raw AS (
     src.region AS raw_region,
     src.region_nombre AS raw_region_nombre,
     src.zona AS raw_zona,
-    NULLIF(UPPER(TRIM(src.region)), '') AS region,
-    NULLIF(TRIM(src.region_nombre), '') AS region_nombre,
-    NULLIF(LOWER(TRIM(src.zona)), '') AS zona
+    NULLIF(UPPER(TRIM(CAST(src.region AS STRING))), '') AS region,
+    NULLIF(TRIM(CAST(src.region_nombre AS STRING)), '') AS region_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.zona AS STRING))), '') AS zona
   FROM src
 ),
 flagged AS (
@@ -95,9 +95,9 @@ raw AS (
     src.region AS raw_region,
     src.region_nombre AS raw_region_nombre,
     src.zona AS raw_zona,
-    NULLIF(UPPER(TRIM(src.region)), '') AS region,
-    NULLIF(TRIM(src.region_nombre), '') AS region_nombre,
-    NULLIF(LOWER(TRIM(src.zona)), '') AS zona
+    NULLIF(UPPER(TRIM(CAST(src.region AS STRING))), '') AS region,
+    NULLIF(TRIM(CAST(src.region_nombre AS STRING)), '') AS region_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.zona AS STRING))), '') AS zona
   FROM src
 ),
 flagged AS (

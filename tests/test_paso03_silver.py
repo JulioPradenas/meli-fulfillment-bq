@@ -87,6 +87,13 @@ def test_prioridad_un_motivo_por_fila():
                 "activo": "false",
             },
             {
+                "seller_id": "SEL-03",
+                "seller_nombre": "Uno",
+                "tipo_seller": "pyme",
+                "region_origen": "RM",
+                "activo": "1",
+            },
+            {
                 "seller_id": "",
                 "seller_nombre": "Sin clave",
                 "tipo_seller": "pyme",
@@ -104,9 +111,8 @@ def test_prioridad_un_motivo_por_fila():
         "nulo_obligatorio",
     ]
     assert out["sellers"]["huerfanas"] == 0
-    assert list(out["sellers"]["silver"]["seller_id"]) == ["SEL-01"]
-    assert list(out["sellers"]["silver"]["region_origen"]) == ["RM"]
-    assert bool(out["sellers"]["silver"]["activo"].iloc[0]) is True
+    assert list(out["sellers"]["silver"]["seller_id"]) == ["SEL-01", "SEL-03"]
+    assert list(out["sellers"]["silver"]["activo"]) == [True, True]
 
 
 def test_reconciliacion_contra_el_manifest(generated):

@@ -18,11 +18,15 @@ raw AS (
     src.carrier_nombre AS raw_carrier_nombre,
     src.tipo_servicio AS raw_tipo_servicio,
     src.activo AS raw_activo,
-    NULLIF(TRIM(src.carrier_id), '') AS carrier_id,
-    NULLIF(TRIM(src.carrier_nombre), '') AS carrier_nombre,
-    NULLIF(LOWER(TRIM(src.tipo_servicio)), '') AS tipo_servicio,
-    NULLIF(LOWER(TRIM(src.activo)), '') AS activo_txt,
-    SAFE_CAST(NULLIF(LOWER(TRIM(src.activo)), '') AS BOOL) AS activo
+    NULLIF(TRIM(CAST(src.carrier_id AS STRING)), '') AS carrier_id,
+    NULLIF(TRIM(CAST(src.carrier_nombre AS STRING)), '') AS carrier_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.tipo_servicio AS STRING))), '') AS tipo_servicio,
+    NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '') AS activo_txt,
+    SAFE_CAST(CASE LOWER(TRIM(CAST(src.activo AS STRING)))
+      WHEN '1' THEN 'true'
+      WHEN '0' THEN 'false'
+      ELSE NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '')
+    END AS BOOL) AS activo
   FROM src
 ),
 flagged AS (
@@ -101,11 +105,15 @@ raw AS (
     src.carrier_nombre AS raw_carrier_nombre,
     src.tipo_servicio AS raw_tipo_servicio,
     src.activo AS raw_activo,
-    NULLIF(TRIM(src.carrier_id), '') AS carrier_id,
-    NULLIF(TRIM(src.carrier_nombre), '') AS carrier_nombre,
-    NULLIF(LOWER(TRIM(src.tipo_servicio)), '') AS tipo_servicio,
-    NULLIF(LOWER(TRIM(src.activo)), '') AS activo_txt,
-    SAFE_CAST(NULLIF(LOWER(TRIM(src.activo)), '') AS BOOL) AS activo
+    NULLIF(TRIM(CAST(src.carrier_id AS STRING)), '') AS carrier_id,
+    NULLIF(TRIM(CAST(src.carrier_nombre AS STRING)), '') AS carrier_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.tipo_servicio AS STRING))), '') AS tipo_servicio,
+    NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '') AS activo_txt,
+    SAFE_CAST(CASE LOWER(TRIM(CAST(src.activo AS STRING)))
+      WHEN '1' THEN 'true'
+      WHEN '0' THEN 'false'
+      ELSE NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '')
+    END AS BOOL) AS activo
   FROM src
 ),
 flagged AS (

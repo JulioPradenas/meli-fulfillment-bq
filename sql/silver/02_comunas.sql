@@ -17,9 +17,9 @@ raw AS (
     src.comuna_id AS raw_comuna_id,
     src.comuna_nombre AS raw_comuna_nombre,
     src.region AS raw_region,
-    NULLIF(TRIM(src.comuna_id), '') AS comuna_id,
-    NULLIF(TRIM(src.comuna_nombre), '') AS comuna_nombre,
-    NULLIF(UPPER(TRIM(src.region)), '') AS region
+    NULLIF(TRIM(CAST(src.comuna_id AS STRING)), '') AS comuna_id,
+    NULLIF(TRIM(CAST(src.comuna_nombre AS STRING)), '') AS comuna_nombre,
+    NULLIF(UPPER(TRIM(CAST(src.region AS STRING))), '') AS region
   FROM src
 ),
 flagged AS (
@@ -96,9 +96,9 @@ raw AS (
     src.comuna_id AS raw_comuna_id,
     src.comuna_nombre AS raw_comuna_nombre,
     src.region AS raw_region,
-    NULLIF(TRIM(src.comuna_id), '') AS comuna_id,
-    NULLIF(TRIM(src.comuna_nombre), '') AS comuna_nombre,
-    NULLIF(UPPER(TRIM(src.region)), '') AS region
+    NULLIF(TRIM(CAST(src.comuna_id AS STRING)), '') AS comuna_id,
+    NULLIF(TRIM(CAST(src.comuna_nombre AS STRING)), '') AS comuna_nombre,
+    NULLIF(UPPER(TRIM(CAST(src.region AS STRING))), '') AS region
   FROM src
 ),
 flagged AS (

@@ -218,9 +218,14 @@ def _normalize_text(value: object, mode: str) -> str | None:
 
 
 def _parse_typed(text: str, bq_type: str):
+    # El CSV puede traer true/True/1. SAFE_CAST de BigQuery acepta true/false;
+    # el 1 y el 0 se normalizan antes, igual que en el SQL.
     if bq_type == "BOOL":
-        if text in {"true", "false"}:
-            return text == "true"
+        token = text.lower()
+        if token in {"1", "true"}:
+            return True
+        if token in {"0", "false"}:
+            return False
         return None
     if bq_type == "DATE":
         try:
@@ -403,8 +408,9 @@ def resumen(clasificado: dict[str, dict[str, object]]) -> dict[str, dict]:
 
 
 def _expr(col: Column) -> str:
-    raw = f"src.{col.name}"
-    trimmed = f"TRIM({raw})"
+    # Bronze es STRING. CAST AS STRING no asume el tipo de llegada: TRIM exige STRING.
+    as_string = f"CAST(src.{col.name} AS STRING)"
+    trimmed = f"TRIM({as_string})"
     if col.normalize == "lower":
         body = f"LOWER({trimmed})"
     elif col.normalize == "upper":
@@ -414,6 +420,19 @@ def _expr(col: Column) -> str:
     text = f"NULLIF({body}, '')"
     if col.bq_type == "STRING":
         return f"{text} AS {col.name}"
+    if col.bq_type == "BOOL":
+        # true/True/TRUE y 1 entran; false/False/0 también. NO-CAST no.
+        mapped = (
+            "CASE LOWER(" + trimmed + ")\n"
+            "      WHEN '1' THEN 'true'\n"
+            "      WHEN '0' THEN 'false'\n"
+            "      ELSE " + text + "\n"
+            "    END"
+        )
+        return (
+            f"{text} AS {col.name}_txt,\n"
+            f"    SAFE_CAST({mapped} AS BOOL) AS {col.name}"
+        )
     return (
         f"{text} AS {col.name}_txt,\n"
         f"    SAFE_CAST({text} AS {col.bq_type}) AS {col.name}"

@@ -19,12 +19,16 @@ raw AS (
     src.tipo_seller AS raw_tipo_seller,
     src.region_origen AS raw_region_origen,
     src.activo AS raw_activo,
-    NULLIF(TRIM(src.seller_id), '') AS seller_id,
-    NULLIF(TRIM(src.seller_nombre), '') AS seller_nombre,
-    NULLIF(LOWER(TRIM(src.tipo_seller)), '') AS tipo_seller,
-    NULLIF(UPPER(TRIM(src.region_origen)), '') AS region_origen,
-    NULLIF(LOWER(TRIM(src.activo)), '') AS activo_txt,
-    SAFE_CAST(NULLIF(LOWER(TRIM(src.activo)), '') AS BOOL) AS activo
+    NULLIF(TRIM(CAST(src.seller_id AS STRING)), '') AS seller_id,
+    NULLIF(TRIM(CAST(src.seller_nombre AS STRING)), '') AS seller_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.tipo_seller AS STRING))), '') AS tipo_seller,
+    NULLIF(UPPER(TRIM(CAST(src.region_origen AS STRING))), '') AS region_origen,
+    NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '') AS activo_txt,
+    SAFE_CAST(CASE LOWER(TRIM(CAST(src.activo AS STRING)))
+      WHEN '1' THEN 'true'
+      WHEN '0' THEN 'false'
+      ELSE NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '')
+    END AS BOOL) AS activo
   FROM src
 ),
 flagged AS (
@@ -107,12 +111,16 @@ raw AS (
     src.tipo_seller AS raw_tipo_seller,
     src.region_origen AS raw_region_origen,
     src.activo AS raw_activo,
-    NULLIF(TRIM(src.seller_id), '') AS seller_id,
-    NULLIF(TRIM(src.seller_nombre), '') AS seller_nombre,
-    NULLIF(LOWER(TRIM(src.tipo_seller)), '') AS tipo_seller,
-    NULLIF(UPPER(TRIM(src.region_origen)), '') AS region_origen,
-    NULLIF(LOWER(TRIM(src.activo)), '') AS activo_txt,
-    SAFE_CAST(NULLIF(LOWER(TRIM(src.activo)), '') AS BOOL) AS activo
+    NULLIF(TRIM(CAST(src.seller_id AS STRING)), '') AS seller_id,
+    NULLIF(TRIM(CAST(src.seller_nombre AS STRING)), '') AS seller_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.tipo_seller AS STRING))), '') AS tipo_seller,
+    NULLIF(UPPER(TRIM(CAST(src.region_origen AS STRING))), '') AS region_origen,
+    NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '') AS activo_txt,
+    SAFE_CAST(CASE LOWER(TRIM(CAST(src.activo AS STRING)))
+      WHEN '1' THEN 'true'
+      WHEN '0' THEN 'false'
+      ELSE NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '')
+    END AS BOOL) AS activo
   FROM src
 ),
 flagged AS (

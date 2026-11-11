@@ -16,69 +16,74 @@ TABLE_ORDER: tuple[str, ...] = (
     "eventos_tracking",
 )
 
-# (nombre, tipo BigQuery). Sin NOT NULL: el modo es NULLABLE.
+# Bronze es landing crudo: todas las columnas son STRING NULLABLE.
+# El load de BigQuery rechaza 'NO-CAST' si la columna ya es BOOL, DATE o
+# TIMESTAMP (max_bad_records=0). El tipo real se aplica en silver con SAFE_CAST.
 TABLES: dict[str, list[tuple[str, str]]] = {
-    "regiones": [
-        ("region", "STRING"),
-        ("region_nombre", "STRING"),
-        ("zona", "STRING"),
-    ],
-    "comunas": [
-        ("comuna_id", "STRING"),
-        ("comuna_nombre", "STRING"),
-        ("region", "STRING"),
-    ],
-    "centros_fulfillment": [
-        ("fc_id", "STRING"),
-        ("fc_nombre", "STRING"),
-        ("tipo_fc", "STRING"),
-        ("comuna_id", "STRING"),
-        ("activo", "BOOL"),
-    ],
-    "carriers": [
-        ("carrier_id", "STRING"),
-        ("carrier_nombre", "STRING"),
-        ("tipo_servicio", "STRING"),
-        ("activo", "BOOL"),
-    ],
-    "sellers": [
-        ("seller_id", "STRING"),
-        ("seller_nombre", "STRING"),
-        ("tipo_seller", "STRING"),
-        ("region_origen", "STRING"),
-        ("activo", "BOOL"),
-    ],
-    "ordenes": [
-        ("orden_id", "STRING"),
-        ("seller_id", "STRING"),
-        ("ts_creacion", "TIMESTAMP"),
-        ("comuna_destino_id", "STRING"),
-        ("estado_orden", "STRING"),
-    ],
-    "envios": [
-        ("envio_id", "STRING"),
-        ("orden_id", "STRING"),
-        ("seller_id", "STRING"),
-        ("fc_id", "STRING"),
-        ("carrier_id", "STRING"),
-        ("comuna_destino_id", "STRING"),
-        ("tipo_logistica", "STRING"),
-        ("ts_creacion", "TIMESTAMP"),
-        ("ts_despacho", "TIMESTAMP"),
-        ("ts_entrega", "TIMESTAMP"),
-        ("fecha_promesa", "DATE"),
-        ("estado", "STRING"),
-        ("motivo_cancelacion_logistica", "STRING"),
-    ],
-    "eventos_tracking": [
-        ("evento_id", "STRING"),
-        ("envio_id", "STRING"),
-        ("ts_evento", "TIMESTAMP"),
-        ("codigo_evento", "STRING"),
-        ("fc_id", "STRING"),
-        ("carrier_id", "STRING"),
-        ("comuna_id", "STRING"),
-    ],
+    table: [(name, "STRING") for name, _typ in cols]
+    for table, cols in {
+        "regiones": [
+            ("region", "STRING"),
+            ("region_nombre", "STRING"),
+            ("zona", "STRING"),
+        ],
+        "comunas": [
+            ("comuna_id", "STRING"),
+            ("comuna_nombre", "STRING"),
+            ("region", "STRING"),
+        ],
+        "centros_fulfillment": [
+            ("fc_id", "STRING"),
+            ("fc_nombre", "STRING"),
+            ("tipo_fc", "STRING"),
+            ("comuna_id", "STRING"),
+            ("activo", "STRING"),
+        ],
+        "carriers": [
+            ("carrier_id", "STRING"),
+            ("carrier_nombre", "STRING"),
+            ("tipo_servicio", "STRING"),
+            ("activo", "STRING"),
+        ],
+        "sellers": [
+            ("seller_id", "STRING"),
+            ("seller_nombre", "STRING"),
+            ("tipo_seller", "STRING"),
+            ("region_origen", "STRING"),
+            ("activo", "STRING"),
+        ],
+        "ordenes": [
+            ("orden_id", "STRING"),
+            ("seller_id", "STRING"),
+            ("ts_creacion", "STRING"),
+            ("comuna_destino_id", "STRING"),
+            ("estado_orden", "STRING"),
+        ],
+        "envios": [
+            ("envio_id", "STRING"),
+            ("orden_id", "STRING"),
+            ("seller_id", "STRING"),
+            ("fc_id", "STRING"),
+            ("carrier_id", "STRING"),
+            ("comuna_destino_id", "STRING"),
+            ("tipo_logistica", "STRING"),
+            ("ts_creacion", "STRING"),
+            ("ts_despacho", "STRING"),
+            ("ts_entrega", "STRING"),
+            ("fecha_promesa", "STRING"),
+            ("estado", "STRING"),
+            ("motivo_cancelacion_logistica", "STRING"),
+        ],
+        "eventos_tracking": [
+            ("evento_id", "STRING"),
+            ("envio_id", "STRING"),
+            ("ts_evento", "STRING"),
+            ("codigo_evento", "STRING"),
+            ("fc_id", "STRING"),
+            ("carrier_id", "STRING"),
+            ("comuna_id", "STRING"),
+        ],
+    }.items()
 }
 
 # Columna que el generador vacía en la anomalía clave_nula.
@@ -106,15 +111,16 @@ def columns(table: str) -> list[str]:
 
 
 def render_ddl() -> str:
-    """CREATE OR REPLACE, todas las columnas NULLABLE, expiración 60 días."""
-    header = f"""-- Meli Fulfillment — Paso 2: DDL bronze (landing NULLABLE).
+    """CREATE OR REPLACE. Bronze es todo STRING NULLABLE. El tipo vive en silver."""
+    header = f"""-- Meli Fulfillment — DDL bronze (landing crudo, todo STRING NULLABLE).
 -- Dataset: {DATASET} · location: US · expiración: {EXPIRATION_DAYS} días.
 -- Sandbox sin facturación: sin DML y sin streaming. Este archivo solo tiene
--- CREATE OR REPLACE TABLE (schema vacío). Los CSV entran por load job
--- WRITE_TRUNCATE. No hay ALTER: si hay que recrear el shape, se reemplaza
--- la tabla y `make run` vuelve a cargar desde cero.
--- Silver/gold (pasos siguientes): CREATE OR REPLACE TABLE/VIEW AS SELECT,
--- partition_expiration_days = {EXPIRATION_DAYS}. Tampoco DML.
+-- CREATE OR REPLACE TABLE. Los CSV entran por load job WRITE_TRUNCATE
+-- con max_bad_records=0. No hay ALTER.
+--
+-- Todas las columnas son STRING. Un BOOL/DATE/TIMESTAMP en el load rechaza
+-- el token 'NO-CAST' y el job falla entero (incidente PR #3: regiones y
+-- comunas cargaron; el resto no). Silver castea con SAFE_CAST.
 --
 -- {NOTICE}
 """

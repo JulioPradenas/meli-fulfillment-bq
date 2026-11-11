@@ -3,12 +3,18 @@
 > **Lab de portafolio. Marca con fines ilustrativos.**
 
 **Dataset:** `meli_silver` · **location:** `US` · **expiración:** 60 días.  
-**Entrada:** `meli_bronze`, todo NULLABLE.  
+**Entrada:** `meli_bronze`, todo STRING NULLABLE. El load no tipa.  
 **Salida:** una tabla silver por entidad y `q_<tabla>` con la fila cruda, un motivo y la regla.
 
-El bronze **cambió** respecto de la corrida que ya dio `RESULTADO: OK` en la Mac. Se agregaron `cast_fallido` y `entrega_antes_despacho` para poder probar el `SAFE_CAST` y la fecha incoherente en el envío, no solo en el evento. `make run` reconstruye CSV, bronze y silver desde cero.
+## Lección del load (PR #3)
 
----
+La primera corrida real falló en `make bronze`. El DDL de bronze declaraba `activo` BOOL, `ts_creacion` y `ts_evento` TIMESTAMP y `fecha_promesa` DATE. BigQuery, con `max_bad_records=0`, rechazó `NO-CAST`: `Unable to parse; column_name: "activo" column_type: BOOL value: "NO-CAST"`. Cargaron `regiones` (18) y `comunas` (47). Las otras seis tablas no.
+
+`DRY=1` no lo vio: validaba el header y contaba filas, no el valor contra el tipo del job. El arreglo no fue subir `max_bad_records` (eso pierde filas y rompe la reconciliación). Fue dejar bronze en STRING y castear en silver.
+
+En una entrevista: si el landing ya tipa, la cuarentena nunca ve el texto ilegible, porque el load murió antes. La calidad se mide donde la fila todavía existe. Bronze guarda el crudo. Silver dice si sirve.
+
+El token `NO-CAST` sigue en el CSV. En silver es `cast_fallido`. `activo` acepta `true`, `True` y `1` (y `false` / `0`); cualquier otro texto no vacío es cast fallido.
 
 ## Qué
 
@@ -39,7 +45,7 @@ Cada archivo hace dos `CREATE OR REPLACE`: la tabla limpia y `q_<tabla>`.
 
 En cada fila:
 
-- `TRIM`. Códigos de estado, tipo y motivo en minúsculas. Región en mayúsculas. `activo` en minúsculas y luego `SAFE_CAST` a `BOOL`. Fechas a `DATE`, timestamps a `TIMESTAMP`.
+- `TRIM` sobre `CAST(columna AS STRING)`, porque bronze no tiene tipo. Códigos de estado, tipo y motivo en minúsculas. Región en mayúsculas. `activo` acepta `true`/`True`/`1` y `false`/`False`/`0`, y el resto no vacío cae en `SAFE_CAST ... AS BOOL`. Fechas con `SAFE_CAST` a `DATE`, timestamps con `SAFE_CAST` a `TIMESTAMP`.
 - El contrato no tiene medidas `INT64` ni `NUMERIC`. No se inventaron columnas para poder escribir el cast. Los tipos que sí existen se castean de verdad.
 - Dedup con `QUALIFY ROW_NUMBER()` sobre la llave natural, solo entre filas que ya pasaron cast y nulos. El duplicado exacto se queda una vez en silver; la copia va a cuarentena.
 - FK opcional vacía (`fc_id` en Flex, `carrier_id` antes del handoff) no es huérfana. FK con valor que no está en la dimensión silver, sí.
@@ -97,9 +103,7 @@ Motivos (solo los distintos de cero):
 ```bash
 cd /Users/julio/meli-fulfillment-bq
 source .venv/bin/activate
-git fetch origin
-git checkout cursor/paso-03-silver-1363
-pip install -r requirements.txt
+git pull
 export GCP_PROJECT=meli-fulfillment-jp
 make run
 ```
@@ -120,4 +124,5 @@ No hay credenciales GCP en el entorno del agente. No se ejecutó el `CREATE OR R
 - **¿Por qué la FK contra silver y no contra bronze?** El padre también puede estar en cuarentena. Un envío que apunta a un seller cuya fila no sobrevivió no tiene dimensión.
 - **¿Por qué `CREATE OR REPLACE` y no `MERGE`?** El sandbox no tiene DML. Además las tablas mueren a los 60 días. Reconstruir es el diseño, no un accidente.
 - **¿El porcentaje de atrasos usa la cuarentena?** No. El KPI sigue siendo `SUM(atrasado) / SUM(entregados)` sobre silver. La cuarentena no entra al denominador ni al numerador. Meterla “para no perder filas” en el porcentaje volvería a mezclar poblaciones.
+- **¿Por qué bronze es STRING y no BOOL/DATE/TIMESTAMP?** Porque el load parsea el CSV y, con `max_bad_records=0`, un `NO-CAST` en un BOOL aborta el job. Pasó en la corrida real: entraron regiones y comunas; el resto no. Subir `max_bad_records` esconde filas. STRING las conserva y silver las marca `cast_fallido`. `DRY=1` no sustituye esa prueba: hay que mirar el valor contra el tipo del schema, no solo el header.
 - **¿Qué no casteamos a INT64 o NUMERIC?** El contrato de este lab no trae montos ni cantidades. Inventar una columna para mostrar el cast sería un contrato falso.

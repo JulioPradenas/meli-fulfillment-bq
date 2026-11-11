@@ -19,12 +19,16 @@ raw AS (
     src.tipo_fc AS raw_tipo_fc,
     src.comuna_id AS raw_comuna_id,
     src.activo AS raw_activo,
-    NULLIF(TRIM(src.fc_id), '') AS fc_id,
-    NULLIF(TRIM(src.fc_nombre), '') AS fc_nombre,
-    NULLIF(LOWER(TRIM(src.tipo_fc)), '') AS tipo_fc,
-    NULLIF(TRIM(src.comuna_id), '') AS comuna_id,
-    NULLIF(LOWER(TRIM(src.activo)), '') AS activo_txt,
-    SAFE_CAST(NULLIF(LOWER(TRIM(src.activo)), '') AS BOOL) AS activo
+    NULLIF(TRIM(CAST(src.fc_id AS STRING)), '') AS fc_id,
+    NULLIF(TRIM(CAST(src.fc_nombre AS STRING)), '') AS fc_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.tipo_fc AS STRING))), '') AS tipo_fc,
+    NULLIF(TRIM(CAST(src.comuna_id AS STRING)), '') AS comuna_id,
+    NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '') AS activo_txt,
+    SAFE_CAST(CASE LOWER(TRIM(CAST(src.activo AS STRING)))
+      WHEN '1' THEN 'true'
+      WHEN '0' THEN 'false'
+      ELSE NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '')
+    END AS BOOL) AS activo
   FROM src
 ),
 flagged AS (
@@ -107,12 +111,16 @@ raw AS (
     src.tipo_fc AS raw_tipo_fc,
     src.comuna_id AS raw_comuna_id,
     src.activo AS raw_activo,
-    NULLIF(TRIM(src.fc_id), '') AS fc_id,
-    NULLIF(TRIM(src.fc_nombre), '') AS fc_nombre,
-    NULLIF(LOWER(TRIM(src.tipo_fc)), '') AS tipo_fc,
-    NULLIF(TRIM(src.comuna_id), '') AS comuna_id,
-    NULLIF(LOWER(TRIM(src.activo)), '') AS activo_txt,
-    SAFE_CAST(NULLIF(LOWER(TRIM(src.activo)), '') AS BOOL) AS activo
+    NULLIF(TRIM(CAST(src.fc_id AS STRING)), '') AS fc_id,
+    NULLIF(TRIM(CAST(src.fc_nombre AS STRING)), '') AS fc_nombre,
+    NULLIF(LOWER(TRIM(CAST(src.tipo_fc AS STRING))), '') AS tipo_fc,
+    NULLIF(TRIM(CAST(src.comuna_id AS STRING)), '') AS comuna_id,
+    NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '') AS activo_txt,
+    SAFE_CAST(CASE LOWER(TRIM(CAST(src.activo AS STRING)))
+      WHEN '1' THEN 'true'
+      WHEN '0' THEN 'false'
+      ELSE NULLIF(LOWER(TRIM(CAST(src.activo AS STRING))), '')
+    END AS BOOL) AS activo
   FROM src
 ),
 flagged AS (

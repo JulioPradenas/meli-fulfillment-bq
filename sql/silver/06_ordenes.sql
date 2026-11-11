@@ -19,12 +19,12 @@ raw AS (
     src.ts_creacion AS raw_ts_creacion,
     src.comuna_destino_id AS raw_comuna_destino_id,
     src.estado_orden AS raw_estado_orden,
-    NULLIF(TRIM(src.orden_id), '') AS orden_id,
-    NULLIF(TRIM(src.seller_id), '') AS seller_id,
-    NULLIF(TRIM(src.ts_creacion), '') AS ts_creacion_txt,
-    SAFE_CAST(NULLIF(TRIM(src.ts_creacion), '') AS TIMESTAMP) AS ts_creacion,
-    NULLIF(TRIM(src.comuna_destino_id), '') AS comuna_destino_id,
-    NULLIF(LOWER(TRIM(src.estado_orden)), '') AS estado_orden
+    NULLIF(TRIM(CAST(src.orden_id AS STRING)), '') AS orden_id,
+    NULLIF(TRIM(CAST(src.seller_id AS STRING)), '') AS seller_id,
+    NULLIF(TRIM(CAST(src.ts_creacion AS STRING)), '') AS ts_creacion_txt,
+    SAFE_CAST(NULLIF(TRIM(CAST(src.ts_creacion AS STRING)), '') AS TIMESTAMP) AS ts_creacion,
+    NULLIF(TRIM(CAST(src.comuna_destino_id AS STRING)), '') AS comuna_destino_id,
+    NULLIF(LOWER(TRIM(CAST(src.estado_orden AS STRING))), '') AS estado_orden
   FROM src
 ),
 flagged AS (
@@ -111,12 +111,12 @@ raw AS (
     src.ts_creacion AS raw_ts_creacion,
     src.comuna_destino_id AS raw_comuna_destino_id,
     src.estado_orden AS raw_estado_orden,
-    NULLIF(TRIM(src.orden_id), '') AS orden_id,
-    NULLIF(TRIM(src.seller_id), '') AS seller_id,
-    NULLIF(TRIM(src.ts_creacion), '') AS ts_creacion_txt,
-    SAFE_CAST(NULLIF(TRIM(src.ts_creacion), '') AS TIMESTAMP) AS ts_creacion,
-    NULLIF(TRIM(src.comuna_destino_id), '') AS comuna_destino_id,
-    NULLIF(LOWER(TRIM(src.estado_orden)), '') AS estado_orden
+    NULLIF(TRIM(CAST(src.orden_id AS STRING)), '') AS orden_id,
+    NULLIF(TRIM(CAST(src.seller_id AS STRING)), '') AS seller_id,
+    NULLIF(TRIM(CAST(src.ts_creacion AS STRING)), '') AS ts_creacion_txt,
+    SAFE_CAST(NULLIF(TRIM(CAST(src.ts_creacion AS STRING)), '') AS TIMESTAMP) AS ts_creacion,
+    NULLIF(TRIM(CAST(src.comuna_destino_id AS STRING)), '') AS comuna_destino_id,
+    NULLIF(LOWER(TRIM(CAST(src.estado_orden AS STRING))), '') AS estado_orden
   FROM src
 ),
 flagged AS (

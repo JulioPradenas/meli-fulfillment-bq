@@ -11,8 +11,9 @@ Sandbox:
   - load_table_from_file. No streaming inserts. No INSERT/UPDATE/DELETE/MERGE.
   - WRITE_TRUNCATE: re-run reemplaza filas. Junto con CREATE OR REPLACE,
     `make run` reconstruye desde cero.
-  - Schema del job forzado a NULLABLE. REQUIRED rechazaba los nulos de las
-    anomalías (lección KORA: 'Required column value is missing').
+  - Schema del job: STRING NULLABLE en todas las columnas, max_bad_records=0.
+    REQUIRED rechazaba nulos (lección KORA). BOOL/DATE/TIMESTAMP rechazaban
+    'NO-CAST' y abortaban el job (incidente PR #3). El tipo se aplica en silver.
   - Location US. Proyecto solo desde GCP_PROJECT.
 """
 
@@ -57,12 +58,46 @@ def schema_as_nullable(fields: list) -> list:
 
 
 def contract_schema(table_id: str) -> list:
+    """Bronze acepta el CSV crudo. El tipo lógico no entra en el load."""
     from google.cloud import bigquery
 
     return [
-        bigquery.SchemaField(name, field_type, mode="NULLABLE")
-        for name, field_type in TABLES[table_id]
+        bigquery.SchemaField(name, "STRING", mode="NULLABLE")
+        for name, _field_type in TABLES[table_id]
     ]
+
+
+def bronze_load_accepts(value: object, field_type: str) -> bool:
+    """
+    True si un load CSV NULLABLE con max_bad_records=0 aceptaría el texto.
+
+    El vacío es NULL y entra. STRING acepta cualquier cosa, incluido NO-CAST.
+    BOOL solo true/false/1/0. DATE y TIMESTAMP solo si parsean. Eso es lo que
+    DRY=1 no veía: validaba el header, no el valor contra el tipo del job.
+    """
+    from datetime import datetime
+
+    text = "" if value is None else str(value).strip()
+    if text == "":
+        return True
+    kind = field_type.upper()
+    if kind == "STRING":
+        return True
+    if kind == "BOOL":
+        return text.lower() in {"true", "false", "1", "0"}
+    if kind == "DATE":
+        try:
+            datetime.strptime(text, "%Y-%m-%d")
+        except ValueError:
+            return False
+        return True
+    if kind == "TIMESTAMP":
+        try:
+            datetime.strptime(text, "%Y-%m-%d %H:%M:%S%z")
+        except ValueError:
+            return False
+        return True
+    return False
 
 
 def build_load_job_config(table_id: str):
@@ -79,6 +114,8 @@ def build_load_job_config(table_id: str):
         skip_leading_rows=1,
         write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
         autodetect=False,
+        # 0 a propósito. Subirlo tragaba filas y rompía bronze = silver + cuarentena.
+        max_bad_records=0,
     )
 
 

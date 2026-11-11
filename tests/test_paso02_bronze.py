@@ -30,7 +30,42 @@ def _sql_code(text: str) -> str:
     return "\n".join(kept).upper()
 
 
-def test_ddl_es_create_or_replace_nullable_y_expira():
+def test_ddl_bronze_todas_las_columnas_son_string():
+    """El load tipado rechazó NO-CAST (PR #3). Bronze no declara BOOL/DATE/TIMESTAMP."""
+    import re
+
+    text = SQL.read_text(encoding="utf-8")
+    types = re.findall(r"(?m)^  [a-z0-9_]+ ([A-Z0-9_]+),?$", text)
+    assert types, "no se leyeron columnas del DDL"
+    assert set(types) == {"STRING"}
+    for table in contract.TABLE_ORDER:
+        assert {typ for _name, typ in contract.TABLES[table]} == {"STRING"}
+        assert {field.field_type for field in load_bronze.contract_schema(table)} == {"STRING"}
+
+
+def test_csv_crudo_entra_en_schema_string_y_no_cast_revienta_un_tipo():
+    """DRY=1 solo miraba el header. Este test mira el valor contra el tipo del job."""
+    import generate_data
+
+    gen = generate_data.generate(42)
+    saw_no_cast = False
+    for table, rows in gen.tables.items():
+        schema = {field.name: field.field_type for field in load_bronze.contract_schema(table)}
+        for row in rows:
+            for column, value in row.items():
+                assert load_bronze.bronze_load_accepts(value, schema[column]), (
+                    f"{table}.{column}={value!r} no entra en {schema[column]}"
+                )
+                if str(value).strip() == "NO-CAST":
+                    saw_no_cast = True
+                    assert not load_bronze.bronze_load_accepts(value, "BOOL")
+                    assert not load_bronze.bronze_load_accepts(value, "DATE")
+                    assert not load_bronze.bronze_load_accepts(value, "TIMESTAMP")
+    assert saw_no_cast, "el generador ya no inyecta NO-CAST; el incidente deja de estar cubierto"
+    assert load_bronze.bronze_load_accepts("true", "BOOL")
+    assert load_bronze.bronze_load_accepts("True", "BOOL")
+    assert load_bronze.bronze_load_accepts("1", "BOOL")
+    assert load_bronze.bronze_load_accepts("", "BOOL")
     rendered = contract.render_ddl()
     assert SQL.read_text(encoding="utf-8") == rendered
     code = _sql_code(rendered)
@@ -121,6 +156,8 @@ def test_load_config_write_truncate_y_nullable():
     assert [field.name for field in cfg.schema] == contract.columns("envios")
     assert all(field.mode == "NULLABLE" for field in cfg.schema)
     assert not any(str(field.mode).upper() == "REQUIRED" for field in cfg.schema)
+    assert {field.field_type for field in cfg.schema} == {"STRING"}
+    assert cfg.max_bad_records == 0
 
 
 def test_load_dry_run_no_escribe(tmp_path: Path):

@@ -17,7 +17,15 @@ Ocho CSV reproducibles (maestros de Chile + órdenes, envíos y eventos de track
 - `src/load_bronze.py` las llena con un load job.
 - `make run` hace las tres cosas y compara `num_rows` contra el manifest.
 
-El grano y las columnas salen de [modelo-datos.md](modelo-datos.md). Todas las columnas del DDL son **NULLABLE**.
+El grano y las columnas salen de [modelo-datos.md](modelo-datos.md). El DDL de bronze es **todo STRING y NULLABLE**. El tipo (BOOL, DATE, TIMESTAMP) se aplica en silver con `SAFE_CAST`.
+
+## Por qué bronze es todo STRING
+
+El load de BigQuery parsea el CSV contra el tipo de la columna y, con `max_bad_records=0`, aborta el job entero si un valor no entra. En la corrida real del PR #3, `regiones` (18) y `comunas` (47) cargaron porque ya eran STRING. Las otras seis fallaron: `activo` era BOOL, `ts_creacion` y `ts_evento` eran TIMESTAMP y `fecha_promesa` era DATE. El mensaje fue `Unable to parse; column_name: "activo" column_type: BOOL value: "NO-CAST"`.
+
+Esas filas son la suciedad que silver tiene que cuarentenar como `cast_fallido`. Si el load las tira, no hay cuarentena y `bronze = silver + cuarentena` no se puede defender. Subir `max_bad_records` las perdería en silencio, que es peor. Por eso bronze no tipa: acepta el texto crudo, incluidos `NO-CAST`, `true`, `True` y `1`. Silver decide.
+
+En una entrevista: el landing no es el contrato. El contrato es silver. Tipar en el load mezcla las dos capas y convierte un problema de calidad en un job fallido. NULLABLE (lección KORA) evita el rechazo del vacío; STRING evita el rechazo del texto ilegible. Las dos hacen falta.
 
 ## Por qué
 
@@ -63,7 +71,7 @@ make run
 | `make run DRY=1` | Regenera CSV, imprime el DDL y valida headers. No llama a BigQuery. |
 | `make test` | pytest, sin ADC y sin red a GCP. |
 
-El load usa schema explícito, `skip_leading_rows=1`, `autodetect=False`. Aunque el DDL ya es NULLABLE, el job vuelve a forzar `mode=NULLABLE` para no reintroducir `REQUIRED`.
+El load usa schema explícito STRING, `skip_leading_rows=1`, `autodetect=False`, `max_bad_records=0`. NULLABLE para que el vacío entre. STRING para que `NO-CAST` entre. El job no descarta filas malas: las deja para silver.
 
 ### Conteos bronze (seed 42)
 

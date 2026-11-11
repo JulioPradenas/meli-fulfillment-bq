@@ -21,14 +21,14 @@ raw AS (
     src.fc_id AS raw_fc_id,
     src.carrier_id AS raw_carrier_id,
     src.comuna_id AS raw_comuna_id,
-    NULLIF(TRIM(src.evento_id), '') AS evento_id,
-    NULLIF(TRIM(src.envio_id), '') AS envio_id,
-    NULLIF(TRIM(src.ts_evento), '') AS ts_evento_txt,
-    SAFE_CAST(NULLIF(TRIM(src.ts_evento), '') AS TIMESTAMP) AS ts_evento,
-    NULLIF(LOWER(TRIM(src.codigo_evento)), '') AS codigo_evento,
-    NULLIF(TRIM(src.fc_id), '') AS fc_id,
-    NULLIF(TRIM(src.carrier_id), '') AS carrier_id,
-    NULLIF(TRIM(src.comuna_id), '') AS comuna_id
+    NULLIF(TRIM(CAST(src.evento_id AS STRING)), '') AS evento_id,
+    NULLIF(TRIM(CAST(src.envio_id AS STRING)), '') AS envio_id,
+    NULLIF(TRIM(CAST(src.ts_evento AS STRING)), '') AS ts_evento_txt,
+    SAFE_CAST(NULLIF(TRIM(CAST(src.ts_evento AS STRING)), '') AS TIMESTAMP) AS ts_evento,
+    NULLIF(LOWER(TRIM(CAST(src.codigo_evento AS STRING))), '') AS codigo_evento,
+    NULLIF(TRIM(CAST(src.fc_id AS STRING)), '') AS fc_id,
+    NULLIF(TRIM(CAST(src.carrier_id AS STRING)), '') AS carrier_id,
+    NULLIF(TRIM(CAST(src.comuna_id AS STRING)), '') AS comuna_id
   FROM src
 ),
 flagged AS (
@@ -130,14 +130,14 @@ raw AS (
     src.fc_id AS raw_fc_id,
     src.carrier_id AS raw_carrier_id,
     src.comuna_id AS raw_comuna_id,
-    NULLIF(TRIM(src.evento_id), '') AS evento_id,
-    NULLIF(TRIM(src.envio_id), '') AS envio_id,
-    NULLIF(TRIM(src.ts_evento), '') AS ts_evento_txt,
-    SAFE_CAST(NULLIF(TRIM(src.ts_evento), '') AS TIMESTAMP) AS ts_evento,
-    NULLIF(LOWER(TRIM(src.codigo_evento)), '') AS codigo_evento,
-    NULLIF(TRIM(src.fc_id), '') AS fc_id,
-    NULLIF(TRIM(src.carrier_id), '') AS carrier_id,
-    NULLIF(TRIM(src.comuna_id), '') AS comuna_id
+    NULLIF(TRIM(CAST(src.evento_id AS STRING)), '') AS evento_id,
+    NULLIF(TRIM(CAST(src.envio_id AS STRING)), '') AS envio_id,
+    NULLIF(TRIM(CAST(src.ts_evento AS STRING)), '') AS ts_evento_txt,
+    SAFE_CAST(NULLIF(TRIM(CAST(src.ts_evento AS STRING)), '') AS TIMESTAMP) AS ts_evento,
+    NULLIF(LOWER(TRIM(CAST(src.codigo_evento AS STRING))), '') AS codigo_evento,
+    NULLIF(TRIM(CAST(src.fc_id AS STRING)), '') AS fc_id,
+    NULLIF(TRIM(CAST(src.carrier_id AS STRING)), '') AS carrier_id,
+    NULLIF(TRIM(CAST(src.comuna_id AS STRING)), '') AS comuna_id
   FROM src
 ),
 flagged AS (
