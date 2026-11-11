@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Meli fulfillment · Cumplir la promesa, envío por envío</title>
+<style>
+:root {
+  --bg: #F7F6F2;
+  --navy: #2D3277;
+  --navy-2: #23275E;
+  --yellow: #FFE600;
+  --green: #0F6B45;
+  --green-bg: #E5F6EE;
+  --amber: #8A5200;
+  --amber-bg: #FFF4E0;
+  --red: #B42318;
+  --red-bg: #FDECEC;
+  --text: #1F2937;
+  --muted: #4B5563;
+  --line: #E4E2DA;
+  --white: #FFFFFF;
+  --radius: 12px;
+  --gutter: 24px;
+  --shadow: 0 1px 2px rgba(45, 50, 119, 0.06), 0 8px 24px rgba(45, 50, 119, 0.06);
+  --max: 1120px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Roboto, Inter, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  font-feature-settings: "tnum" 1;
+}
+a { color: inherit; }
+.wrap { width: min(var(--max), calc(100% - 48px)); margin: 0 auto; }
+code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: var(--navy);
+}
+
+.hero {
+  background: var(--yellow);
+  color: var(--navy);
+  padding: 36px 0 56px;
+  border-bottom: 2px solid var(--navy);
+}
+.brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+.mark {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--navy); color: #fff;
+  font-weight: 800; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.hero h1 {
+  font-size: 40px; font-weight: 750; letter-spacing: -0.03em;
+  line-height: 1.12; max-width: 16ch; margin-bottom: 12px;
+}
+.lede { font-size: 17px; max-width: 40em; margin-bottom: 22px; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; padding: 0 18px; border-radius: 10px;
+  font-size: 14px; font-weight: 700; text-decoration: none;
+}
+.btn-primary { background: var(--navy); color: #fff; }
+.btn-ghost { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+.btn-pending {
+  background: var(--white); color: var(--navy);
+  border: 1px dashed var(--navy); cursor: default;
+}
+.badge {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 12px;
+  border-radius: 999px; border: 1px solid var(--navy);
+  font-size: 12px; font-weight: 600;
+}
+
+.feature { margin-top: -28px; position: relative; z-index: 1; }
+.browser {
+  background: var(--white); border-radius: 14px; box-shadow: var(--shadow);
+  border: 1px solid var(--line); overflow: hidden;
+}
+.chrome {
+  height: 44px; background: #F3F1E8; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px; padding: 0 14px;
+}
+.dots { display: flex; gap: 6px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: #D1D5DB; display: block; }
+.dots i:nth-child(1) { background: var(--red); }
+.dots i:nth-child(2) { background: var(--amber); }
+.dots i:nth-child(3) { background: var(--green); }
+.urlbar {
+  flex: 1; height: 26px; border-radius: 7px; background: var(--white);
+  border: 1px solid var(--line); color: var(--muted); font-size: 12px;
+  display: flex; align-items: center; padding: 0 10px;
+}
+.pending {
+  min-height: 280px;
+  background:
+    repeating-linear-gradient(-45deg, #F7F6F2, #F7F6F2 12px, #EFEDE4 12px, #EFEDE4 24px);
+  border-top: 1px dashed var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--navy); font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; font-size: 14px;
+}
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gutter); margin-top: 20px;
+}
+.kpi {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  border: 1px solid var(--line); padding: 16px 18px;
+}
+.kpi-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.kpi-value { font-size: 30px; font-weight: 700; color: var(--navy); letter-spacing: -0.03em; margin: 4px 0; }
+.kpi-value.good { color: var(--green); }
+.kpi-value.bad { color: var(--red); }
+.kpi-hint { font-size: 13px; color: var(--muted); }
+
+section { margin-top: 56px; }
+.kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin-bottom: 6px; }
+h2 { font-size: 28px; letter-spacing: -0.03em; color: var(--navy); margin-bottom: 8px; }
+.intro { color: var(--muted); max-width: 46em; margin-bottom: 20px; }
+
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter);
+}
+.card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  border: 1px solid var(--line); padding: 18px 20px;
+}
+.card h3 { color: var(--navy); font-size: 16px; margin-bottom: 6px; }
+.card .big { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; }
+.card .big.bad { color: var(--red); }
+.card .big.good { color: var(--green); }
+.card p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+.pages { display: grid; gap: 16px; }
+.page {
+  display: grid; grid-template-columns: 280px 1fr; gap: 18px;
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 14px;
+}
+.page .pending { min-height: 160px; border: 1px dashed var(--navy); border-radius: 8px; }
+.num { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.page h3 { color: var(--navy); margin: 4px 0 6px; }
+.page p { color: var(--muted); font-size: 14px; }
+
+.trust { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.trust article, .dec {
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 14px;
+}
+.trust h3, .dec h3 { font-size: 14px; color: var(--navy); margin-bottom: 6px; }
+.trust p, .dec p { font-size: 13px; color: var(--muted); }
+.eq { margin-top: 8px; }
+
+.flow {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch;
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px;
+}
+.step { flex: 1 1 140px; }
+.step .layer { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.step h3 { font-size: 14px; color: var(--navy); }
+.arch-note { margin-top: 10px; color: var(--muted); font-size: 13px; }
+
+.decs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+footer {
+  margin-top: 64px; background: var(--navy); color: #fff; padding: 36px 0;
+}
+footer .wrap { display: flex; justify-content: space-between; gap: 24px; align-items: start; }
+footer a { color: var(--yellow); text-decoration: none; font-weight: 700; }
+.disclaimer { max-width: 52em; color: rgba(255,255,255,0.88); font-size: 14px; }
+.role { display: block; color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 4px; }
+
+@media (max-width: 900px) {
+  .hero h1 { font-size: 30px; max-width: none; }
+  .kpi-grid, .compare, .trust, .decs { grid-template-columns: 1fr 1fr; }
+  .page { grid-template-columns: 1fr; }
+  footer .wrap { flex-direction: column; }
+}
+@media (max-width: 560px) {
+  .wrap { width: calc(100% - 32px); }
+  .kpi-grid, .compare, .trust, .decs { grid-template-columns: 1fr; }
+  .cta-row { flex-direction: column; align-items: stretch; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand-row">
+      <div class="mark" aria-hidden="true">M</div>
+      <div class="brand-name">Fulfillment · lab</div>
+    </div>
+    <h1>Cumplir la promesa, envío por envío</h1>
+    <p class="lede">Un reporte para ver si el paquete llegó el día prometido, si el atraso está en la región o en el carrier, y qué causa logística cancela de verdad. Los porcentajes se suman. No se promedian.</p>
+    <div class="cta-row">
+      <span class="btn btn-pending">Link del reporte pendiente</span>
+      <a class="btn btn-ghost" href="https://github.com/JulioPradenas/meli-fulfillment-bq">Ver el pipeline</a>
+      <span class="badge">Lab de portafolio. Marca con fines ilustrativos.</span>
+    </div>
+  </div>
+</header>
+
+<div class="feature">
+  <div class="wrap">
+    <div class="browser">
+      <div class="chrome">
+        <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="urlbar">captura pendiente · el reporte de Data Studio todavía no tiene link público</div>
+      </div>
+      <div class="pending" role="img" aria-label="captura pendiente">captura pendiente</div>
+    </div>
+    <div class="kpi-grid">
+      <article class="kpi">
+        <div class="kpi-label">Entregados</div>
+        <div class="kpi-value">24.335</div>
+        <div class="kpi-hint">De 32.000 envíos en gold</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">A tiempo</div>
+        <div class="kpi-value good">20.776</div>
+        <div class="kpi-hint">Mismo día de la promesa o antes</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Atrasados</div>
+        <div class="kpi-value bad">3.559</div>
+        <div class="kpi-hint">14,62% de los entregados</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Cancelación logística</div>
+        <div class="kpi-value">2.218</div>
+        <div class="kpi-hint">Causa principal: sin stock en el centro, 853</div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<main>
+  <section class="wrap" id="historia">
+    <div class="kicker">La historia, sin filtro</div>
+    <h2>El atraso no está repartido parejo</h2>
+    <p class="intro">Estos cortes salen de <code>f_envios</code> con la misma regla que <code>verify_gold</code>. Atrasado es entregado y el día de entrega, en America/Santiago, es posterior a <code>fecha_promesa</code>.</p>
+    <div class="compare">
+      <article class="card">
+        <h3>Región Metropolitana</h3>
+        <div class="big good">7,22%</div>
+        <p>Sobre 11.234 entregados. Es el piso del lab.</p>
+      </article>
+      <article class="card">
+        <h3>Extremos · Arica, Antofagasta, Aysén, Magallanes</h3>
+        <div class="big bad">38,01%</div>
+        <p>Sobre 2.223 entregados. Mismo denominador: solo entregados.</p>
+      </article>
+      <article class="card">
+        <h3>Andes Express</h3>
+        <div class="big good">7,57%</div>
+        <p>Sobre 11.693 entregados. Carrier <code>CAR-ANDES</code>.</p>
+      </article>
+      <article class="card">
+        <h3>Ruta Austral</h3>
+        <div class="big bad">30,06%</div>
+        <p>Sobre 5.456 entregados. Carrier <code>CAR-SUR</code>.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap" id="paginas">
+    <div class="kicker">El reporte, cuando esté publicado</div>
+    <h2>Seis páginas, una decisión cada una</h2>
+    <p class="intro">Julio arma el informe en Data Studio sobre <code>meli_gold</code>. Las capturas y el link público se reemplazan aquí cuando existan. Hoy el hueco dice lo que falta.</p>
+    <div class="pages">
+      <article class="page">
+        <div class="pending" role="img" aria-label="captura pendiente">captura pendiente</div>
+        <div>
+          <div class="num">01 · Overview</div>
+          <h3>¿Cumplimos la promesa esta semana?</h3>
+          <p>Cuatro tarjetas y la serie por lunes de <code>fecha_promesa</code>. Vista <code>v_puntualidad_semana</code>. Fórmula <code>SUM(n_a_tiempo) / SUM(n_entregados)</code>.</p>
+        </div>
+      </article>
+      <article class="page">
+        <div class="pending" role="img" aria-label="captura pendiente">captura pendiente</div>
+        <div>
+          <div class="num">02 · Atrasos</div>
+          <h3>¿Es la región o es el carrier?</h3>
+          <p>La RM y Andes Express no explican el mismo problema que los extremos y Ruta Austral. El color va solo en la celda del porcentaje ya calculado con SUM/SUM.</p>
+        </div>
+      </article>
+      <article class="page">
+        <div class="pending" role="img" aria-label="captura pendiente">captura pendiente</div>
+        <div>
+          <div class="num">03 · Cancelaciones</div>
+          <h3>Qué causa se come el envío</h3>
+          <p><code>sin_stock_fc</code> suma 853, la mayor. La participación es <code>SUM(n_causa)</code> de ese motivo sobre <code>SUM(n_causa)</code> de todas las causas del filtro. No es la tasa sobre todos los envíos.</p>
+        </div>
+      </article>
+      <article class="page">
+        <div class="pending" role="img" aria-label="captura pendiente">captura pendiente</div>
+        <div>
+          <div class="num">04 · Lead time y embudo</div>
+          <h3>Cuántas horas, y en qué hito se queda</h3>
+          <p>Hitos sin filtro: creado 32.000, despachado 28.470, entregado 24.335. Las horas son <code>SUM(suma_lead_time_orden_horas) / SUM(n_lead_time_orden)</code>, no un promedio de promedios.</p>
+        </div>
+      </article>
+      <article class="page">
+        <div class="pending" role="img" aria-label="captura pendiente">captura pendiente</div>
+        <div>
+          <div class="num">05 · Drill</div>
+          <h3>El envío que explica el número</h3>
+          <p><code>v_drill_envio</code> trae fechas DATE. El control de período se ata a <code>fecha_promesa</code>, no al timestamp.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap" id="confianza">
+    <div class="kicker">Por qué el número se puede defender</div>
+    <h2>La arquitectura sostiene el tablero</h2>
+    <div class="trust">
+      <article>
+        <h3>A tiempo no es un promedio</h3>
+        <p>Se suman envíos, no porcentajes de región.</p>
+        <div class="eq"><code>SUM(n_a_tiempo) / SUM(n_entregados)</code></div>
+      </article>
+      <article>
+        <h3>Nada se pierde entre capas</h3>
+        <p>Envíos: bronze 32.064 = silver 32.000 + cuarentena 64. En las ocho tablas, la cuarentena suma 197.</p>
+        <div class="eq">bronze = silver + cuarentena</div>
+      </article>
+      <article>
+        <h3>El landing no tipa</h3>
+        <p>Bronze es STRING. Un BOOL rechazó <code>NO-CAST</code> y frenó el load. Silver castea y manda esa fila a cuarentena.</p>
+        <div class="eq"><code>max_bad_records = 0</code></div>
+      </article>
+      <article>
+        <h3>Gold no parte por fecha</h3>
+        <p>En el sandbox la partición vence a los 60 días según su fecha. Mayo–octubre desaparecería. Hay cluster por región y carrier.</p>
+        <div class="eq"><code>CLUSTER BY region_id, carrier_id</code></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap" id="arquitectura">
+    <div class="kicker">Pipeline</div>
+    <h2>De un CSV sintético al hecho</h2>
+    <div class="flow">
+      <div class="step"><div class="layer">Origen</div><h3>CSV seed 42</h3></div>
+      <div class="step"><div class="layer">Bronze</div><h3>meli_bronze · todo STRING</h3></div>
+      <div class="step"><div class="layer">Silver</div><h3>meli_silver · 197 en cuarentena</h3></div>
+      <div class="step"><div class="layer">Gold</div><h3>meli_gold · 32.000 envíos</h3></div>
+      <div class="step"><div class="layer">Consumo</div><h3>Data Studio · captura pendiente</h3></div>
+    </div>
+    <p class="arch-note">BigQuery sandbox, location US, sin DML. Un comando reconstruye todo: <code>make run</code>. Proyecto por <code>GCP_PROJECT</code>, sin default en el código.</p>
+  </section>
+
+  <section class="wrap" id="decisiones">
+    <div class="kicker">Decisiones</div>
+    <h2>Lo que el dashboard no puede contradecir</h2>
+    <div class="decs">
+      <article class="dec">
+        <h3>Un envío, una promesa</h3>
+        <p>La orden puede partirse. El atraso se cuenta en <code>f_envios</code>, no en la cabecera de la orden.</p>
+      </article>
+      <article class="dec">
+        <h3>Un motivo por fila mala</h3>
+        <p>Cast, nulo, duplicado, FK, fecha. Si una fila entra dos veces a la cuarentena, la suma con silver deja de dar bronze.</p>
+      </article>
+      <article class="dec">
+        <h3>El mismo día es a tiempo</h3>
+        <p>La hora dentro del día no cuenta. <code>fecha_entrega</code> es el día en America/Santiago.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="disclaimer">Lab de portafolio. Marca con fines ilustrativos. Datos sintéticos, semilla 42, horizonte 2026-05-01 a 2026-10-31. No se atribuyen requisitos a ningún empleador. El reporte de Data Studio todavía no está publicado: donde dice captura pendiente, falta la imagen y el link.</p>
+    <div>
+      <span class="role">Autor</span>
+      Julio Pradenas<br/>
+      <a href="https://github.com/JulioPradenas">github.com/JulioPradenas</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
