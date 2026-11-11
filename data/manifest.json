@@ -1,0 +1,88 @@
+{
+  "anomalies": {
+    "carriers": {
+      "clave_nula": 1,
+      "duplicado_exacto": 1,
+      "evento_fuera_de_orden": 0,
+      "fecha_nula": 0,
+      "fk_huerfana": 0
+    },
+    "centros_fulfillment": {
+      "clave_nula": 1,
+      "duplicado_exacto": 1,
+      "evento_fuera_de_orden": 0,
+      "fecha_nula": 0,
+      "fk_huerfana": 1
+    },
+    "comunas": {
+      "clave_nula": 1,
+      "duplicado_exacto": 1,
+      "evento_fuera_de_orden": 0,
+      "fecha_nula": 0,
+      "fk_huerfana": 2
+    },
+    "envios": {
+      "clave_nula": 8,
+      "duplicado_exacto": 12,
+      "evento_fuera_de_orden": 0,
+      "fecha_nula": 10,
+      "fk_huerfana": 20
+    },
+    "eventos_tracking": {
+      "clave_nula": 8,
+      "duplicado_exacto": 12,
+      "evento_fuera_de_orden": 20,
+      "fecha_nula": 10,
+      "fk_huerfana": 15
+    },
+    "ordenes": {
+      "clave_nula": 6,
+      "duplicado_exacto": 10,
+      "evento_fuera_de_orden": 0,
+      "fecha_nula": 8,
+      "fk_huerfana": 12
+    },
+    "regiones": {
+      "clave_nula": 1,
+      "duplicado_exacto": 1,
+      "evento_fuera_de_orden": 0,
+      "fecha_nula": 0,
+      "fk_huerfana": 0
+    },
+    "sellers": {
+      "clave_nula": 1,
+      "duplicado_exacto": 2,
+      "evento_fuera_de_orden": 0,
+      "fecha_nula": 0,
+      "fk_huerfana": 2
+    }
+  },
+  "clean_counts": {
+    "carriers": 5,
+    "centros_fulfillment": 6,
+    "comunas": 43,
+    "envios": 32000,
+    "eventos_tracking": 151524,
+    "ordenes": 28596,
+    "regiones": 16,
+    "sellers": 24
+  },
+  "dataset": "meli_bronze",
+  "horizon_end": "2026-10-31",
+  "horizon_start": "2026-05-01",
+  "location": "US",
+  "note": "row_counts es el total bronze (lo que debe coincidir con num_rows). anomalies cuenta filas extra inyectadas, por tabla y tipo. row_counts = clean_counts + suma de anomalies de esa tabla.",
+  "notice": "Lab de portafolio. Marca con fines ilustrativos.",
+  "row_counts": {
+    "carriers": 7,
+    "centros_fulfillment": 9,
+    "comunas": 47,
+    "envios": 32050,
+    "eventos_tracking": 151589,
+    "ordenes": 28632,
+    "regiones": 18,
+    "sellers": 29
+  },
+  "seed": 42,
+  "timezone": "America/Santiago"
+}

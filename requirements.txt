@@ -1,2 +1,3 @@
-# Paso 1: solo tests. BigQuery, pandas y el generador llegan en pasos posteriores.
+# Paso 2: tests + cliente BigQuery (solo load jobs y DDL). Sin pandas.
 pytest>=8.0.0
+google-cloud-bigquery>=3.25.0
