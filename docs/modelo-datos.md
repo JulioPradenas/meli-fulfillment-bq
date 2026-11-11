@@ -52,7 +52,7 @@ En el grano de `f_envios` (una fila, un envío, el mismo peso), `AVG(lead_time_h
 
 ## 4. Tablas fuente
 
-Son el futuro bronze. Aquí se fija **qué es una fila** y **cuál es la clave**. No son CSV todavía.
+Son el bronze (`meli_bronze`). Aquí se fija **qué es una fila** y **cuál es la clave**. El Paso 2 las baja a CSV y las carga tal cual: [docs/paso-02-bronze.md](paso-02-bronze.md).
 
 Una orden tiene N envíos. Un envío tiene N eventos de tracking. El hecho gold no explota los eventos: los pliega a hitos y a indicadores.
 
@@ -423,11 +423,12 @@ Lo que ninguna de estas páginas responde (a propósito, en este lab):
 
 ---
 
-## 9. Fuera de este paso
+## 9. Qué queda fuera del modelo
 
-- Generador de datos y CSV.
-- Proyecto GCP, datasets, DDL, cargas, credenciales.
+El CSV, el manifest de anomalías y la carga a `meli_bronze` están en el Paso 2. Siguen fuera de este documento:
+
+- Silver (cuarentena de las anomalías) y gold (`f_envios`).
 - Informe de Looker Studio publicado.
 - Logos o piezas gráficas de la marca.
 
-**Paso 2:** CSV sintéticos con este grano y este catálogo, y el contrato columna a columna.
+En el sandbox las tablas expiran a los 60 días y no hay DML. Silver y gold, cuando existan, se reconstruyen con `CREATE OR REPLACE … AS SELECT` dentro de `make run`.
