@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCATION = "US"
 DATASET = "meli_bronze"
 SILVER_DATASET = "meli_silver"
+GOLD_DATASET = "meli_gold"
 EXPIRATION_DAYS = 60
 EXPIRATION_MS = EXPIRATION_DAYS * 24 * 60 * 60 * 1000
 
