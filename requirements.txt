@@ -1,0 +1,2 @@
+# Paso 1: solo tests. BigQuery, pandas y el generador llegan en pasos posteriores.
+pytest>=8.0.0
