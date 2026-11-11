@@ -50,12 +50,11 @@ Cloud Scheduler / Cloud Functions / Composer: solo se narrarán en pasos posteri
 | 1 | Esqueleto, modelo de datos, guía de estilo | ✅ |
 | 2 | CSV sintéticos, anomalías y bronze sandbox | ✅ |
 | 3 | Silver (cuarentena) | ✅ |
-| 4 | Gold `f_envios` + dimensiones | ⏳ |
-| 5 | Demo de partition / cluster | ⏳ |
-| 6 | Looker Studio según la guía de estilo | ⏳ |
-| 7 | One-pager de portafolio | ⏳ |
+| 4 | Gold estrella, cluster sin partición por fecha | ✅ |
+| 5 | Looker Studio según la guía de estilo | ⏳ |
+| 6 | One-pager de portafolio | ⏳ |
 
-El bronze (Paso 2) y el silver con cuarentena (Paso 3) se reconstruyen con `make run`. Gold sigue fuera: también será `CREATE OR REPLACE … AS SELECT`, sin DML, con particiones que expiran a los 60 días.
+`make run` reconstruye bronze, silver y gold. Gold no usa partición por fecha: en el sandbox esas particiones vencen a los 60 días según su fecha y el horizonte 2026-05 a 2026-10 desaparecería. `f_envios` va con `CLUSTER BY region_id, carrier_id`.
 
 ## Setup
 
@@ -96,7 +95,8 @@ Detalle, conteos y anomalías: [docs/paso-02-bronze.md](docs/paso-02-bronze.md).
 - [Modelo de datos](docs/modelo-datos.md) — fuentes, `f_envios`, fórmulas, páginas del dashboard
 - [Paso 2 — bronze sandbox](docs/paso-02-bronze.md) — CSV, anomalías, load job, límite de 60 días
 - [Paso 3 — silver y cuarentena](docs/paso-03-silver.md) — tipos, dedup, FK, un motivo por fila
-- [Guía de estilo Looker Studio](looker/STYLE_GUIDE.md) — paleta, layout, KPI cards, es-CL, contraste AA
+- [Paso 4 — gold estrella](docs/paso-04-gold.md) — `f_envios`, vistas SUM/SUM, cluster sin partición
+- [Guía de estilo Looker Studio](looker/STYLE_GUIDE.md) — paleta y plan de armado sobre gold
 
 ## Disclaimer
 

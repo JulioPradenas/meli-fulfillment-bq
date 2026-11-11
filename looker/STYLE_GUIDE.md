@@ -5,7 +5,80 @@
 
 Objetivo: que el dashboard de cumplimiento de promesa se arme sobre `f_envios` con la misma fórmula en todas las páginas, números en es-CL y contraste AA.
 
-Fuente de las métricas: [`docs/modelo-datos.md`](../docs/modelo-datos.md). Si una fórmula de aquí no coincide con ese documento, manda el modelo.
+Fuente de las métricas: [`docs/modelo-datos.md`](../docs/modelo-datos.md) y, para armar el informe, [`docs/paso-04-gold.md`](../docs/paso-04-gold.md). Si una fórmula de aquí no coincide con el modelo, manda el modelo. Los campos de Looker salen de `meli_gold`.
+
+---
+
+## Plan de armado sobre meli_gold
+
+Julio arma el informe a mano. Dataset `meli_gold`, location `US`. No hay partición por fecha: el control de período filtra `fecha_promesa` (tipo **DATE**) o `lunes_semana` (tipo **DATE**). No uses el timestamp.
+
+**A tiempo** es `es_entregado = 1` y `fecha_entrega <= fecha_promesa`. `fecha_entrega` es el día de `ts_entrega` en `America/Santiago`. El mismo día de la promesa cuenta a tiempo. `es_atrasado` es el complemento dentro de los entregados. Las dos flags suman `es_entregado`.
+
+Los porcentajes se calculan como SUM/SUM, nunca como promedio de porcentajes. En las vistas agregadas el campo es el conteo (`n_a_tiempo`, `n_entregados`), no un porcentaje ya cerrado.
+
+### Valores esperados sin filtro (seed 42)
+
+Sirven para validar el informe recién conectado, sin filtros cruzados.
+
+| Métrica | Esperado | De dónde |
+|---|---|---|
+| Envíos | **32.000** | `SUM(n_envios)` en `v_puntualidad_semana`, o filas de `v_drill_envio` |
+| Entregados | **24.335** | `SUM(n_entregados)` o `SUM(es_entregado)` |
+| A tiempo | **20.776** | `SUM(n_a_tiempo)` o `SUM(es_a_tiempo)` |
+| Atrasados | **3.559** | `SUM(n_atrasados)` o `SUM(es_atrasado)` |
+| Cumplimiento de promesa | **85,38%** | `SUM(n_a_tiempo) / SUM(n_entregados)` = 20.776 / 24.335 |
+| % atrasados vs promesa | **14,62%** | `SUM(n_atrasados) / SUM(n_entregados)` = 3.559 / 24.335 |
+| Cancelación logística | **2.218** | `SUM(n_cancelado_logistica)` o `SUM(es_cancelado_logistica)` |
+| `sin_stock_fc` | **853** | causa principal; `SUM(n_causa)` en `v_causas_cancelacion` |
+| Atrasados RM | **7,22%** sobre **11.234** entregados | `region_id = RM` |
+| Atrasados extremos (AP, AN, AI, MA) | **38,01%** sobre **2.223** | `grupo_zona = extremos` |
+| Atrasados Andes Express | **7,57%** sobre **11.693** | `carrier_id = CAR-ANDES` |
+| Atrasados Ruta Austral | **30,06%** sobre **5.456** | `carrier_id = CAR-SUR` |
+| Hito creado / despachado / entregado | **32.000 / 28.470 / 24.335** | `v_embudo_hitos` |
+
+### Campos calculados
+
+Tipo Porcentaje, agregación de la fórmula, no del 0/1.
+
+```text
+cumplimiento de promesa = SUM(n_a_tiempo) / SUM(n_entregados)
+% atrasados vs promesa   = SUM(n_atrasados) / SUM(n_entregados)
+lead time orden (h)      = SUM(suma_lead_time_orden_horas) / SUM(n_lead_time_orden)
+lead time despacho (h)   = SUM(suma_lead_time_despacho_horas) / SUM(n_lead_time_despacho)
+participación de la causa = SUM(n_causa) / SUM(n_causa)
+```
+
+La participación usa el mismo `n_causa`: el numerador es el motivo elegido y el denominador es la suma de todas las causas del filtro. No guardes el total repetido en cada fila.
+
+En el drill, la misma definición con los flags del hecho:
+
+```text
+cumplimiento de promesa = SUM(es_a_tiempo) / SUM(es_entregado)
+% atrasados vs promesa   = SUM(es_atrasado) / SUM(es_entregado)
+```
+
+Esas dos son `SUM(a_tiempo) / SUM(entregados)` y `SUM(atrasado) / SUM(entregados)` del modelo. `es_a_tiempo` es `a_tiempo`. `es_entregado` es `entregados`.
+
+### Páginas
+
+Filtro de período en todas: `fecha_promesa` o `lunes_semana`, tipo DATE. Filtros de `region_id`, `carrier_id` y, en el drill, `seller_id`. Sin cross-filter. Footer con el aviso del lab.
+
+| Página | Vista | Gráfico | Campos |
+|---|---|---|---|
+| Overview | `v_puntualidad_semana` | 4 KPI: cumplimiento, % atrasados, envíos, cancelación logística | `n_a_tiempo`, `n_entregados`, `n_atrasados`, `n_envios`, `n_cancelado_logistica` |
+| Overview | `v_lead_time` | KPI lead time orden | `suma_lead_time_orden_horas`, `n_lead_time_orden` |
+| Overview | `v_puntualidad_semana` | Serie semanal de cumplimiento | dimensión `lunes_semana` (DATE), métrica `SUM(n_a_tiempo)/SUM(n_entregados)` |
+| Overview | `v_causas_cancelacion` | Barras de las causas | `motivo`, `n_causa` |
+| Atrasos | `v_puntualidad_semana` | Tabla o barras por `region_id` y por `carrier_id` | `n_atrasados`, `n_entregados`. Color solo en el % ya calculado con SUM/SUM |
+| Atrasos | `v_puntualidad_semana` | Corte `grupo_zona` | RM, centro, extremos, norte, sur |
+| Lead time | `v_lead_time` | KPI orden y despacho, serie por `lunes_semana` | sumas y conteos de horas |
+| Cancelaciones | `v_causas_cancelacion` | Barras por `motivo`, tabla por `fc_id` | `n_causa`. Subtítulo: «sobre cancelaciones logísticas» |
+| Embudo | `v_embudo_hitos` | Barras ordenadas por `orden_hito` | `hito`, `n_envios` |
+| Embudo | `v_embudo_estado` | Barras del estado final | `estado`, `n_envios` |
+| Drill | `v_drill_envio` | Tabla | `envio_id`, `comuna_nombre`, `region_id`, `carrier_nombre`, `seller_nombre`, `fc_nombre`, `fecha_promesa`, `fecha_entrega`, `estado`, `es_atrasado`, `lead_time_orden_horas` |
+
+`v_drill_envio` trae `fecha_creacion`, `fecha_despacho`, `fecha_promesa` y `fecha_entrega` como DATE. El control de fechas se ata a `fecha_promesa`.
 
 ---
 
