@@ -97,6 +97,7 @@ Detalle, conteos y anomalías: [docs/paso-02-bronze.md](docs/paso-02-bronze.md).
 - [Paso 3 — silver y cuarentena](docs/paso-03-silver.md) — tipos, dedup, FK, un motivo por fila
 - [Paso 4 — gold estrella](docs/paso-04-gold.md) — `f_envios`, vistas SUM/SUM, cluster sin partición
 - [Guía de estilo Looker Studio](looker/STYLE_GUIDE.md) — paleta y plan de armado sobre gold
+- [Informe Looker Studio armado](looker/README.md) — fuentes, valores validados y detalles de Looker Studio
 
 ## Disclaimer
 
